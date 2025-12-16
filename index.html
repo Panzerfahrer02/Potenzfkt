@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Potenzfunktionen – Web-Übungen</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="top">
+    <h1>Potenzfunktionen: y = x, y = x², y = x³</h1>
+    <p class="sub">
+      Fülle Tabellen aus, nutze Symmetrie, bestimme fehlende Koordinaten und prüfe Punkte.
+      (Werte sind absichtlich <b>anders</b> als auf deinem Blatt.)
+    </p>
+  </header>
+
+  <main class="container">
+
+    <!-- Aufgabe 1 -->
+    <section class="card">
+      <h2>1) Wertetabelle ergänzen (andere x-Werte)</h2>
+      <p class="hint">Tipp: Für negative x gilt: x² ist positiv, x³ bleibt negativ.</p>
+
+      <div class="grid-2">
+        <div>
+          <table class="tbl" id="tbl-a1">
+            <thead>
+              <tr>
+                <th>x</th>
+                <th>y = x</th>
+                <th>y = x²</th>
+                <th>y = x³</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+          <div class="btnrow">
+            <button class="btn" id="check-a1">Prüfen</button>
+            <button class="btn ghost" id="solve-a1">Lösung anzeigen</button>
+            <button class="btn ghost" id="reset-a1">Zurücksetzen</button>
+          </div>
+
+          <div class="feedback" id="fb-a1"></div>
+        </div>
+
+        <div>
+          <h3 class="mini">Mini-Plot (zum Vergleichen)</h3>
+          <canvas id="plot" width="520" height="420" aria-label="Koordinatensystem"></canvas>
+          <p class="small">
+            Die Kurven werden automatisch gezeichnet: <b>y=x</b>, <b>y=x²</b>, <b>y=x³</b>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Aufgabe 2 -->
+    <section class="card">
+      <h2>2) Tabellen ohne Taschenrechner – Symmetrie nutzen</h2>
+      <div class="grid-3">
+        <div>
+          <h3 class="mini">2a) y = x³</h3>
+          <table class="tbl" id="tbl-a2a">
+            <thead><tr><th>x</th><th>x³</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="btnrow">
+            <button class="btn" data-check="a2a">Prüfen</button>
+            <button class="btn ghost" data-solve="a2a">Lösung</button>
+          </div>
+          <div class="feedback" id="fb-a2a"></div>
+        </div>
+
+        <div>
+          <h3 class="mini">2b) y = x²</h3>
+          <table class="tbl" id="tbl-a2b">
+            <thead><tr><th>x</th><th>x²</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="btnrow">
+            <button class="btn" data-check="a2b">Prüfen</button>
+            <button class="btn ghost" data-solve="a2b">Lösung</button>
+          </div>
+          <div class="feedback" id="fb-a2b"></div>
+        </div>
+
+        <div>
+          <h3 class="mini">2c) y = x</h3>
+          <table class="tbl" id="tbl-a2c">
+            <thead><tr><th>x</th><th>x¹</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="btnrow">
+            <button class="btn" data-check="a2c">Prüfen</button>
+            <button class="btn ghost" data-solve="a2c">Lösung</button>
+          </div>
+          <div class="feedback" id="fb-a2c"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Aufgabe 3 -->
+    <section class="card">
+      <h2>3) Fehlende Koordinate bestimmen</h2>
+      <p class="hint">Achte darauf: Punkt (x|y) liegt auf dem Graphen ⇔ y = f(x).</p>
+
+      <div class="grid-3">
+        <div class="box">
+          <h3 class="mini">3a) y = x</h3>
+          <div class="q" id="q-a3a"></div>
+          <div class="btnrow">
+            <button class="btn" data-check="a3a">Prüfen</button>
+            <button class="btn ghost" data-solve="a3a">Lösung</button>
+          </div>
+          <div class="feedback" id="fb-a3a"></div>
+        </div>
+
+        <div class="box">
+          <h3 class="mini">3b) y = x²</h3>
+          <div class="q" id="q-a3b"></div>
+          <div class="btnrow">
+            <button class="btn" data-check="a3b">Prüfen</button>
+            <button class="btn ghost" data-solve="a3b">Lösung</button>
+          </div>
+          <div class="feedback" id="fb-a3b"></div>
+        </div>
+
+        <div class="box">
+          <h3 class="mini">3c) y = x³</h3>
+          <div class="q" id="q-a3c"></div>
+          <div class="btnrow">
+            <button class="btn" data-check="a3c">Prüfen</button>
+            <button class="btn ghost" data-solve="a3c">Lösung</button>
+          </div>
+          <div class="feedback" id="fb-a3c"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Aufgabe 4 -->
+    <section class="card">
+      <h2>4) Welche Punkte liegen auf dem Graphen?</h2>
+      <p class="hint">Rechne y aus und vergleiche mit dem gegebenen y-Wert.</p>
+
+      <div class="grid-2">
+        <div class="box">
+          <h3 class="mini">4a) y = x²</h3>
+          <div id="q-a4a"></div>
+          <div class="btnrow">
+            <button class="btn" id="check-a4a">Prüfen</button>
+            <button class="btn ghost" id="solve-a4a">Lösung</button>
+          </div>
+          <div class="feedback" id="fb-a4a"></div>
+        </div>
+
+        <div class="box">
+          <h3 class="mini">4b) y = x³</h3>
+          <div id="q-a4b"></div>
+          <div class="btnrow">
+            <button class="btn" id="check-a4b">Prüfen</button>
+            <button class="btn ghost" id="solve-a4b">Lösung</button>
+          </div>
+          <div class="feedback" id="fb-a4b"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span>Hinweis: Dezimalzahlen kannst du mit <b>,</b> oder <b>.</b> eingeben.</span>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
