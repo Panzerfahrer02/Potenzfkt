@@ -68,6 +68,7 @@ h1{margin:0 0 6px; font-size:28px}
   font-weight:700;
 }
 .tbl tr:last-child td{border-bottom:none}
+
 .tbl input{
   width:100%;
   padding:8px 10px;
@@ -78,6 +79,13 @@ h1{margin:0 0 6px; font-size:28px}
   outline:none;
 }
 .tbl input:focus{border-color:rgba(184,192,255,.7)}
+
+.tbl input.given{
+  opacity: .78;
+  font-weight: 800;
+  border-color: rgba(77,163,255,.55);
+  background: rgba(77,163,255,.08);
+}
 
 .btnrow{
   display:flex;
@@ -98,6 +106,7 @@ h1{margin:0 0 6px; font-size:28px}
 .btn.ghost{
   background:transparent;
 }
+
 .feedback{
   margin-top:10px;
   padding:10px 12px;
@@ -114,37 +123,10 @@ h1{margin:0 0 6px; font-size:28px}
 .mini{margin:0 0 8px; font-size:16px}
 .small{color:var(--muted); font-size:13px; margin:8px 0 0}
 
-.box{
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:12px;
-  background:rgba(0,0,0,.10);
-}
-
-.q{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-.q .row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
-}
-.q code{
-  background:rgba(255,255,255,.08);
-  padding:3px 7px;
-  border-radius:10px;
-}
-.q input{
-  width:120px;
-  padding:8px 10px;
-  border-radius:12px;
-  border:1px solid var(--line);
-  background:rgba(0,0,0,.18);
-  color:var(--text);
-}
+.legend{padding:2px 6px; border-radius:10px; background:rgba(255,255,255,.08)}
+.legend.l1{border:1px solid rgba(77,163,255,.6)}
+.legend.l2{border:1px solid rgba(255,159,67,.6)}
+.legend.l3{border:1px solid rgba(46,204,113,.6)}
 
 canvas{
   width:100%;
@@ -159,3 +141,4 @@ canvas{
   text-align:center;
   padding:6px 0 0;
 }
+
