@@ -1,4 +1,4 @@
-// ===================== Helpers =====================
+// ===================== Zahlen / Runden / Vergleichen =====================
 function parseNum(raw) {
   if (raw == null) return NaN;
   const s = String(raw).trim().replace(",", ".");
@@ -7,16 +7,22 @@ function parseNum(raw) {
   return Number.isFinite(n) ? n : NaN;
 }
 
-function eq(a, b, eps = 1e-9) {
-  return Math.abs(a - b) <= eps;
+// auf 2 Nachkommastellen runden
+function round2(n) {
+  return Math.round(n * 100) / 100;
 }
 
-function fmt(n) {
-  // hübsch: ganze Zahlen ohne .0, sonst bis 4 Nachkommastellen
+// Vergleich korrekt bei 2 Nachkommastellen
+function equals2(a, b) {
+  return Math.abs(round2(a) - round2(b)) < 0.005;
+}
+
+// Anzeige: ganze Zahlen ohne ,00, sonst 2 Nachkommastellen
+function fmt2(n) {
   if (!Number.isFinite(n)) return "";
-  const rounded = Math.round(n * 10000) / 10000;
-  if (eq(rounded, Math.round(rounded))) return String(Math.round(rounded));
-  return String(rounded).replace(".", ",");
+  const r = round2(n);
+  if (Number.isInteger(r)) return String(r);
+  return r.toFixed(2).replace(".", ",");
 }
 
 function setFb(id, cls, msg) {
@@ -33,8 +39,7 @@ function makeInput(value = "", placeholder = "") {
   return i;
 }
 
-// ===================== Aufgabe 1: Tabelle =====================
-// bewusst andere x-Werte als im Foto
+// ===================== Aufgabe 1 =====================
 const A1_XS = [-3.5, -2, -1.25, -0.5, 0, 0.75, 1.5, 2.25, 3];
 
 function buildA1Table() {
@@ -45,7 +50,7 @@ function buildA1Table() {
     const tr = document.createElement("tr");
 
     const tdX = document.createElement("td");
-    tdX.textContent = fmt(x);
+    tdX.textContent = fmt2(x);
 
     const tdY1 = document.createElement("td");
     const tdY2 = document.createElement("td");
@@ -90,42 +95,33 @@ function checkA1(showSolutions = false) {
     const v2 = parseNum(in2.value);
     const v3 = parseNum(in3.value);
 
-    // zählen
-    [v1, v2, v3].forEach((v) => {
-      total++;
-      if (!Number.isFinite(v)) empty++;
-    });
-
-    const r1 = Number.isFinite(v1) && eq(v1, y1);
-    const r2 = Number.isFinite(v2) && eq(v2, y2);
-    const r3 = Number.isFinite(v3) && eq(v3, y3);
-
-    if (r1) ok++;
-    if (r2) ok++;
-    if (r3) ok++;
+    total += 3;
+    if (!Number.isFinite(v1)) empty++;
+    if (!Number.isFinite(v2)) empty++;
+    if (!Number.isFinite(v3)) empty++;
 
     if (showSolutions) {
-      in1.value = fmt(y1);
-      in2.value = fmt(y2);
-      in3.value = fmt(y3);
+      in1.value = fmt2(y1);
+      in2.value = fmt2(y2);
+      in3.value = fmt2(y3);
+      return;
     }
+
+    if (Number.isFinite(v1) && equals2(v1, y1)) ok++;
+    if (Number.isFinite(v2) && equals2(v2, y2)) ok++;
+    if (Number.isFinite(v3) && equals2(v3, y3)) ok++;
   });
 
   if (showSolutions) {
-    setFb("fb-a1", "warn", "Lösung eingetragen. Jetzt kannst du vergleichen.");
+    setFb("fb-a1", "warn", "Lösung eingetragen. (Gerundet auf 2 Nachkommastellen)");
     return;
   }
-
   if (empty === total) {
     setFb("fb-a1", "warn", "Noch nichts eingetragen – füll erst ein paar Felder aus 🙂");
     return;
   }
-
-  if (ok === total) {
-    setFb("fb-a1", "ok", `Alles korrekt ✅ (${ok}/${total})`);
-  } else {
-    setFb("fb-a1", "bad", `Noch nicht ganz: ${ok}/${total} richtig. Tipp: Vorzeichen bei x³ beachten!`);
-  }
+  if (ok === total) setFb("fb-a1", "ok", `Alles korrekt ✅ (${ok}/${total})`);
+  else setFb("fb-a1", "bad", `Noch nicht ganz: ${ok}/${total} richtig. (Es zählt auf 2 Nachkommastellen)`);
 }
 
 function resetA1() {
@@ -134,57 +130,87 @@ function resetA1() {
   setFb("fb-a1", "", "");
 }
 
-// ===================== Aufgabe 2: Symmetrie-Tabellen =====================
-const A2 = {
-  a2a: { // x^3
-    rows: [
-      { x: 1.2, y: null },
-      { x: 2, y: null },
-      { x: -1.2, y: null },
-      { x: -2, y: null },
-    ],
-    f: (x) => x * x * x
-  },
-  a2b: { // x^2
-    rows: [
-      { x: 0.6, y: null },
-      { x: 1.5, y: null },
-      { x: -0.6, y: null },
-      { x: -1.5, y: null },
-    ],
-    f: (x) => x * x
-  },
-  a2c: { // x
-    rows: [
-      { x: 1.8, y: null },
-      { x: -2.4, y: null },
-      { x: 0.25, y: null },
-      { x: -0.25, y: null },
-    ],
-    f: (x) => x
+// ===================== Aufgabe 2 (NEU: zufällig + 2 Vorgaben pro Tabelle) =====================
+// Pool an "schönen" Beträgen (damit nicht super hässliche Zahlen entstehen)
+const MAG_POOL = [0.4, 0.5, 0.6, 0.8, 1.2, 1.5, 2.0, 2.5];
+
+function sampleTwoDistinct(arr) {
+  const a = arr[Math.floor(Math.random() * arr.length)];
+  let b = a;
+  while (b === a) b = arr[Math.floor(Math.random() * arr.length)];
+  return [a, b];
+}
+
+function randomSign() {
+  return Math.random() < 0.5 ? -1 : 1;
+}
+
+// Baut 4 Zeilen: ±a und ±b.
+// Für jeden Betrag (a und b) wird GENAU EIN Wert vorgegeben (disabled).
+function makeSymmetryRowsFor(f) {
+  const [a, b] = sampleTwoDistinct(MAG_POOL);
+  const mags = [a, b];
+
+  const rows = [];
+  mags.forEach(mag => {
+    const sGiven = randomSign();        // z.B. +mag wird vorgegeben
+    const sOther = -sGiven;
+
+    const xGiven = sGiven * mag;
+    const xOther = sOther * mag;
+
+    rows.push({ x: xGiven, y: round2(f(xGiven)), given: true });
+    rows.push({ x: xOther, y: null, given: false });
+  });
+
+  // mischen, damit es nicht immer "given, leer, given, leer" ist
+  for (let i = rows.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rows[i], rows[j]] = [rows[j], rows[i]];
   }
+  return rows;
+}
+
+const A2 = {
+  a2a: { f: (x) => x * x * x, rows: [] }, // x^3
+  a2b: { f: (x) => x * x, rows: [] },     // x^2
+  a2c: { f: (x) => x, rows: [] },         // x
 };
 
-function buildA2Tables() {
-  for (const key of Object.keys(A2)) {
-    const tbody = document.querySelector(`#tbl-${key} tbody`);
-    tbody.innerHTML = "";
-    A2[key].rows.forEach((r, idx) => {
-      const tr = document.createElement("tr");
-      const tdX = document.createElement("td");
-      tdX.textContent = fmt(r.x);
+function rebuildA2Task(task) {
+  const conf = A2[task];
+  conf.rows = makeSymmetryRowsFor(conf.f);
+  renderA2Task(task);
+  setFb(`fb-${task}`, "", "");
+}
 
-      const tdY = document.createElement("td");
-      const input = makeInput("", "…");
-      input.dataset.task = key;
-      input.dataset.idx = String(idx);
-      tdY.appendChild(input);
+function renderA2Task(task) {
+  const conf = A2[task];
+  const tbody = document.querySelector(`#tbl-${task} tbody`);
+  tbody.innerHTML = "";
 
-      tr.appendChild(tdX);
-      tr.appendChild(tdY);
-      tbody.appendChild(tr);
-    });
-  }
+  conf.rows.forEach((r, idx) => {
+    const tr = document.createElement("tr");
+
+    const tdX = document.createElement("td");
+    tdX.textContent = fmt2(r.x);
+
+    const tdY = document.createElement("td");
+    const input = makeInput("", "…");
+    input.dataset.task = task;
+    input.dataset.idx = String(idx);
+
+    if (r.given) {
+      input.value = fmt2(r.y);
+      input.disabled = true;
+      input.classList.add("given");
+    }
+
+    tdY.appendChild(input);
+    tr.appendChild(tdX);
+    tr.appendChild(tdY);
+    tbody.appendChild(tr);
+  });
 }
 
 function checkA2(task, showSolutions = false) {
@@ -194,22 +220,36 @@ function checkA2(task, showSolutions = false) {
 
   inputs.forEach((inp) => {
     const idx = Number(inp.dataset.idx);
-    const x = conf.rows[idx].x;
-    const y = conf.f(x);
+    const row = conf.rows[idx];
+    const x = row.x;
+    const sol = conf.f(x);
+
+    // vorgegeben zählt immer als richtig
+    if (row.given) {
+      ok++;
+      if (showSolutions) inp.value = fmt2(sol);
+      return;
+    }
 
     const v = parseNum(inp.value);
-    if (!Number.isFinite(v)) empty++;
-    else if (eq(v, y)) ok++;
+    if (!Number.isFinite(v)) {
+      empty++;
+      if (showSolutions) inp.value = fmt2(sol);
+      return;
+    }
 
-    if (showSolutions) inp.value = fmt(y);
+    if (equals2(v, sol)) ok++;
+
+    if (showSolutions) inp.value = fmt2(sol);
   });
 
   if (showSolutions) {
-    setFb(`fb-${task}`, "warn", "Lösung eingetragen (ideal zum Vergleichen).");
+    setFb(`fb-${task}`, "warn", "Lösung eingetragen (auf 2 Nachkommastellen gerundet).");
     return;
   }
 
-  if (empty === total) {
+  if (empty === total - conf.rows.filter(r=>r.given).length) {
+    // alle "nicht-given" leer
     setFb(`fb-${task}`, "warn", "Trag erst etwas ein 🙂 (Symmetrie hilft!)");
     return;
   }
@@ -218,198 +258,25 @@ function checkA2(task, showSolutions = false) {
   else setFb(`fb-${task}`, "bad", `Teilweise: ${ok}/${total} richtig.`);
 }
 
-// ===================== Aufgabe 3: Fehlende Koordinaten =====================
-const A3 = {
-  a3a: { // y=x
-    items: [
-      { label: "P₁ ( -3 | y )", ask: "y", x: -3, y: null, f: (x) => x },
-      { label: "P₂ ( x | 1,75 )", ask: "x", x: null, y: 1.75, finv: (y) => y },
-      { label: "P₃ ( 2,4 | y )", ask: "y", x: 2.4, y: null, f: (x) => x },
-      { label: "P₄ ( x | -0,5 )", ask: "x", x: null, y: -0.5, finv: (y) => y }
-    ]
-  },
-  a3b: { // y=x^2
-    items: [
-      { label: "P₁ ( -4 | y )", ask: "y", x: -4, y: null, f: (x) => x * x },
-      { label: "P₂ ( x | 6,25 )", ask: "x", x: null, y: 6.25, finvChoices: (y) => [Math.sqrt(y), -Math.sqrt(y)] },
-      { label: "P₃ ( 1,2 | y )", ask: "y", x: 1.2, y: null, f: (x) => x * x },
-      { label: "P₄ ( x | 9 )", ask: "x", x: null, y: 9, finvChoices: (y) => [3, -3] }
-    ]
-  },
-  a3c: { // y=x^3
-    items: [
-      { label: "P₁ ( -2 | y )", ask: "y", x: -2, y: null, f: (x) => x * x * x },
-      { label: "P₂ ( x | 27 )", ask: "x", x: null, y: 27, finv: (y) => Math.cbrt(y) },
-      { label: "P₃ ( 1,5 | y )", ask: "y", x: 1.5, y: null, f: (x) => x * x * x },
-      { label: "P₄ ( x | -0,125 )", ask: "x", x: null, y: -0.125, finv: (y) => Math.cbrt(y) }
-    ]
-  }
-};
-
-function buildA3() {
-  for (const key of Object.keys(A3)) {
-    const host = document.getElementById(`q-${key}`);
-    host.innerHTML = "";
-    A3[key].items.forEach((it, idx) => {
-      const row = document.createElement("div");
-      row.className = "row";
-      const left = document.createElement("span");
-      left.innerHTML = `<code>${it.label}</code> → ${it.ask} =`;
-      const inp = makeInput("", it.ask);
-      inp.dataset.task = key;
-      inp.dataset.idx = String(idx);
-      row.appendChild(left);
-      row.appendChild(inp);
-      host.appendChild(row);
-    });
-  }
-}
-
-function solutionForA3Item(it) {
-  if (it.ask === "y") return it.f(it.x);
-  if (it.finv) return it.finv(it.y);
-  if (it.finvChoices) return it.finvChoices(it.y); // ±
-  return NaN;
-}
-
-function checkA3(task, showSolutions = false) {
-  const items = A3[task].items;
-  const inputs = [...document.querySelectorAll(`#q-${task} input`)];
-  let total = inputs.length, ok = 0, empty = 0;
-
-  inputs.forEach((inp) => {
-    const idx = Number(inp.dataset.idx);
-    const it = items[idx];
-    const sol = solutionForA3Item(it);
-
-    if (showSolutions) {
-      if (Array.isArray(sol)) inp.value = sol.map(fmt).join(" oder ");
-      else inp.value = fmt(sol);
-      return;
-    }
-
-    const v = parseNum(inp.value);
-    if (!Number.isFinite(v)) { empty++; return; }
-
-    if (Array.isArray(sol)) {
-      if (sol.some(s => eq(v, s))) ok++;
-    } else {
-      if (eq(v, sol)) ok++;
-    }
-  });
-
-  if (showSolutions) {
-    setFb(`fb-${task}`, "warn", "Lösung angezeigt/eingetragen.");
-    return;
-  }
-
-  if (empty === total) {
-    setFb(`fb-${task}`, "warn", "Noch nichts eingetragen 🙂");
-    return;
-  }
-
-  if (ok === total) setFb(`fb-${task}`, "ok", `Alles korrekt ✅ (${ok}/${total})`);
-  else setFb(`fb-${task}`, "bad", `Teilweise: ${ok}/${total} richtig. (Bei x² kann es ± geben!)`);
-}
-
-// ===================== Aufgabe 4: Punktprobe (Checkboxen) =====================
-const A4 = {
-  a4a: { // y=x^2
-    title: "y = x²",
-    points: [
-      { x: -7, y: 49 },       // true
-      { x: 3.5, y: 12.25 },   // true
-      { x: -5, y: -25 },      // false
-      { x: 9, y: 80 },        // false
-    ],
-    f: (x) => x * x
-  },
-  a4b: { // y=x^3
-    title: "y = x³",
-    points: [
-      { x: -4, y: -64 },        // true
-      { x: 1.2, y: 1.728 },     // true
-      { x: -2.5, y: 15.625 },   // false
-      { x: 6, y: 215 },         // false (6^3=216)
-    ],
-    f: (x) => x * x * x
-  }
-};
-
-function buildA4() {
-  for (const key of Object.keys(A4)) {
-    const host = document.getElementById(`q-${key}`);
-    host.innerHTML = "";
-
-    A4[key].points.forEach((p, idx) => {
-      const row = document.createElement("div");
-      row.className = "row";
-
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.id = `${key}-${idx}`;
-      cb.dataset.task = key;
-      cb.dataset.idx = String(idx);
-
-      const label = document.createElement("label");
-      label.setAttribute("for", cb.id);
-      label.innerHTML = `<code>P${idx + 1} (${fmt(p.x)} | ${fmt(p.y)})</code>`;
-
-      row.appendChild(cb);
-      row.appendChild(label);
-      host.appendChild(row);
-    });
-  }
-}
-
-function checkA4(task, showSolutions = false) {
-  const conf = A4[task];
-  const cbs = [...document.querySelectorAll(`#q-${task} input[type="checkbox"]`)];
-  let total = cbs.length, ok = 0;
-
-  cbs.forEach((cb) => {
-    const idx = Number(cb.dataset.idx);
-    const p = conf.points[idx];
-    const truth = eq(p.y, conf.f(p.x));
-
-    if (showSolutions) {
-      cb.checked = truth;
-      return;
-    }
-
-    if (cb.checked === truth) ok++;
-  });
-
-  if (showSolutions) {
-    setFb(`fb-${task}`, "warn", "Lösung angekreuzt. Jetzt vergleichen.");
-    return;
-  }
-
-  if (ok === total) setFb(`fb-${task}`, "ok", `Perfekt ✅ (${ok}/${total})`);
-  else setFb(`fb-${task}`, "bad", `Noch nicht: ${ok}/${total} richtig. Rechne y=f(x) nach.`);
-}
-
-// ===================== Plot (Canvas) =====================
+// ===================== Plot (farbig) =====================
 function drawPlot() {
   const canvas = document.getElementById("plot");
   const ctx = canvas.getContext("2d");
 
   const W = canvas.width, H = canvas.height;
 
-  // Koordinatenbereich
+  // Bereich so wählen, dass man x^3 noch gut sieht
   const xmin = -4, xmax = 4;
-  const ymin = -6, ymax = 10;
+  const ymin = -10, ymax = 10;
 
   function X(x){ return (x - xmin) / (xmax - xmin) * W; }
   function Y(y){ return H - (y - ymin) / (ymax - ymin) * H; }
 
-  // clear
   ctx.clearRect(0,0,W,H);
 
   // grid
-  ctx.globalAlpha = 1;
   ctx.lineWidth = 1;
-
+  ctx.strokeStyle = "rgba(255,255,255,.08)";
   for (let gx = Math.ceil(xmin); gx <= Math.floor(xmax); gx++) {
     ctx.beginPath();
     ctx.moveTo(X(gx), 0);
@@ -423,25 +290,23 @@ function drawPlot() {
     ctx.stroke();
   }
 
-  // axes (dicker)
+  // axes
   ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(X(0), 0);
-  ctx.lineTo(X(0), H);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(0, Y(0));
-  ctx.lineTo(W, Y(0));
-  ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,.18)";
+  ctx.beginPath(); ctx.moveTo(X(0), 0); ctx.lineTo(X(0), H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, Y(0)); ctx.lineTo(W, Y(0)); ctx.stroke();
 
-  // functions
-  function plotFunc(f) {
-    ctx.lineWidth = 2;
+  function plotFunc(f, color) {
     ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
     let first = true;
+
     for (let x = xmin; x <= xmax; x += 0.02) {
       const y = f(x);
+      if (!Number.isFinite(y)) continue;
       if (y < ymin - 1 || y > ymax + 1) continue;
+
       const px = X(x), py = Y(y);
       if (first) { ctx.moveTo(px, py); first = false; }
       else ctx.lineTo(px, py);
@@ -449,61 +314,49 @@ function drawPlot() {
     ctx.stroke();
   }
 
-  // y=x, y=x^2, y=x^3
-  plotFunc((x) => x);
-  plotFunc((x) => x * x);
-  plotFunc((x) => x * x * x);
-
-  // mark some points for orientation
-  const points = [
-    {x:-2, y:-2},
-    {x:2, y:2},
-    {x:-2, y:4},
-    {x:2, y:4},
-    {x:-1, y:-1},
-    {x:1, y:1},
-    {x:-1, y:-1},
-    {x:1, y:1},
-  ];
-  ctx.lineWidth = 1;
-  points.forEach(p => {
-    ctx.beginPath();
-    ctx.arc(X(p.x), Y(p.y), 3, 0, Math.PI*2);
-    ctx.fill();
-  });
+  // farbig
+  plotFunc(x => x, "#4da3ff");           // y = x (blau)
+  plotFunc(x => x * x, "#ff9f43");       // y = x² (orange)
+  plotFunc(x => x * x * x, "#2ecc71");   // y = x³ (grün)
 }
 
 // ===================== Wire up =====================
 function init() {
+  // Aufgabe 1
   buildA1Table();
-  buildA2Tables();
-  buildA3();
-  buildA4();
   drawPlot();
 
   document.getElementById("check-a1").addEventListener("click", () => checkA1(false));
   document.getElementById("solve-a1").addEventListener("click", () => checkA1(true));
   document.getElementById("reset-a1").addEventListener("click", resetA1);
 
+  // Aufgabe 2: initial zufällige Datensätze
+  rebuildA2Task("a2a");
+  rebuildA2Task("a2b");
+  rebuildA2Task("a2c");
+
+  // Buttons Prüfen/Lösung
   document.querySelectorAll("[data-check]").forEach(btn => {
     btn.addEventListener("click", () => {
       const task = btn.dataset.check;
-      if (task.startsWith("a2")) checkA2(task, false);
-      if (task.startsWith("a3")) checkA3(task, false);
-    });
-  });
-  document.querySelectorAll("[data-solve]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const task = btn.dataset.solve;
-      if (task.startsWith("a2")) checkA2(task, true);
-      if (task.startsWith("a3")) checkA3(task, true);
+      checkA2(task, false);
     });
   });
 
-  document.getElementById("check-a4a").addEventListener("click", () => checkA4("a4a", false));
-  document.getElementById("solve-a4a").addEventListener("click", () => checkA4("a4a", true));
-  document.getElementById("check-a4b").addEventListener("click", () => checkA4("a4b", false));
-  document.getElementById("solve-a4b").addEventListener("click", () => checkA4("a4b", true));
+  document.querySelectorAll("[data-solve]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const task = btn.dataset.solve;
+      checkA2(task, true);
+    });
+  });
+
+  // Buttons Neue Werte
+  document.querySelectorAll("[data-reroll]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const task = btn.dataset.reroll;
+      rebuildA2Task(task);
+    });
+  });
 }
 
 document.addEventListener("DOMContentLoaded", init);
