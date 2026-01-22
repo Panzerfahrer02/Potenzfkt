@@ -17,7 +17,7 @@ Die App ist für alle Nutzer geeignet, die über einen Webzugang verfügen und i
 
 Die Anwendung ist webbasiert und erreichbar über:
 
-* erreichbar über `[WEBADRESSE]`
+* erreichbar über `[http://localhost:3000/]`
 
 Ein Benutzerkonto ist erforderlich. Nutzer können sich registrieren oder mit bestehenden Zugangsdaten anmelden.
 
@@ -48,7 +48,7 @@ Ein Nutzer kann:
 * ein neues Benutzerkonto anlegen
 * sich mit E-Mail und Passwort anmelden
 
-image::login.png[Login, width=60%]
+image::registry.png[Login, width=60%]
 
 Nach erfolgreichem Login wird die persönliche Startseite angezeigt.
 
